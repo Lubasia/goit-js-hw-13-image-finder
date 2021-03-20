@@ -3,7 +3,6 @@ import templates from '../templates/templates.hbs';
 import refs from './refs';
 
 refs.searchForm.addEventListener('submit', imageSearch);
-refs.loadMoreBtn.addEventListener('click', loadMoreBtn);
 
 function imageSearch(e) {
     e.preventDefault();
@@ -22,29 +21,33 @@ function imageSearch(e) {
   });
     input.value = '';
 }
-
-function loadMoreBtn() {
-  api.incrementPage();
-  api.fetchPicture().then(hits => {
-    const markup = createListItemsTemplate(hits);
-    iserListItems(markup);
-    window.scrollTo(0, 1000);
-
-    window.scrollTo({
-      top: refs.gallery.scrollHeight,
-      behavior: 'smooth',
-    });
+const onEntry = entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && api.query !== '') {
+      api.fetchPicture().then(hits => {
+        const markup = createListItemsTemplate(hits);
+        iserListItems(markup);
+        api.incrementPage();
+      });
+    };
   });
-}
+};
 
-function iserListItems(items) {
-  refs.gallery.insertAdjacentHTML('beforeend', items);
-}
+const observer = new IntersectionObserver(onEntry, {
+  rootMargin: '300px',
+});
+observer.observe(refs.container);
 
-function createListItemsTemplate(items) {
-  return templates(items);
-}
 
-function clearListItems() {
-  refs.gallery.innerHTML = '';
-}
+      function iserListItems(items) {
+        refs.gallery.insertAdjacentHTML('beforeend', items);
+      }
+      
+      function createListItemsTemplate(items) {
+        return templates(items);
+      }
+      
+      function clearListItems() {
+        refs.gallery.innerHTML = '';
+      }
+
